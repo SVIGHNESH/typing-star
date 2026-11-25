@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#171813">
+  <title>Keystack — Typing Practice</title>
+  <link rel="stylesheet" href="styles.css?v=16">
+</head>
+<body data-view="test">
+  <header class="topbar">
+    <button class="brand" id="brandButton" aria-label="Go to typing test">
+      <span class="brand-mark" aria-hidden="true">K</span>
+      <span>keystack</span>
+    </button>
+    <nav class="tabs" aria-label="Primary navigation">
+      <button class="tab active" data-view="test">Test</button>
+      <button class="tab" data-view="skill">Skill Test</button>
+      <button class="tab" data-view="learn">Learn</button>
+      <button class="tab" data-view="games">Games</button>
+    </nav>
+    <div class="top-actions">
+      <div class="personal-best" title="Personal best">
+        <span>PB</span>
+        <strong id="pbValue">—</strong>
+      </div>
+      <button class="icon-button" id="soundButton" aria-label="Mute sounds" title="Mute sounds">♪</button>
+      <button class="icon-button" id="themeButton" aria-label="Switch theme" title="Switch theme">☼</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="testView" class="view active" aria-label="Typing test">
+      <div class="test-shell">
+        <aside class="test-controls" aria-label="Test settings">
+          <div class="control-group">
+            <span class="control-label">Mode</span>
+            <div class="segmented" id="modeControls">
+              <button class="selected" data-mode="time">Time</button>
+              <button data-mode="words">Words</button>
+              <button data-mode="quote">Quote</button>
+              <button data-mode="punctuation">Punctuation</button>
+              <button data-mode="numbers">Numbers</button>
+              <button data-mode="custom">Custom paper</button>
+            </div>
+          </div>
+          <div class="control-group">
+            <span class="control-label">Duration</span>
+            <div class="key-options" id="durationControls">
+              <button data-duration="15">15</button>
+              <button data-duration="30" class="selected">30</button>
+              <button data-duration="60">60</button>
+              <button data-duration="120">120</button>
+            </div>
+            <div class="custom-duration">
+              <input id="customDuration" type="text" inputmode="text" maxlength="12" aria-label="Custom duration, for example 45s, 4m, or 2h" placeholder="e.g. 45s, 4m, 2h">
+              <button id="applyDuration" type="button">Set</button>
+            </div>
+          </div>
+          <div class="control-group">
+            <span class="control-label">Difficulty</span>
+            <div class="segmented" id="difficultyControls">
+              <button data-difficulty="easy" class="selected">Easy</button>
+              <button data-difficulty="medium">Medium</button>
+              <button data-difficulty="hard">Hard</button>
+            </div>
+          </div>
+          <div class="control-group custom-paper-panel" id="customPaperPanel" hidden>
+            <label class="control-label" for="customPaper">Your paper</label>
+            <textarea id="customPaper" rows="7" maxlength="2000" placeholder="Paste or type a paragraph for practice..."></textarea>
+            <button class="primary-button custom-paper-button" id="applyPaper" type="button">Use paper</button>
+          </div>
+        </aside>
+
+        <div class="test-workspace">
+          <div class="typing-area" id="typingArea" tabindex="0">
+            <div class="live-metrics">
+              <span class="live-time" id="timeValue">30</span>
+              <span><strong id="wpmValue">0</strong> wpm</span>
+              <span><strong id="accuracyValue">100</strong>% acc</span>
+              <span><strong id="wrongWordsValue">0</strong>/10 wrong</span>
+            </div>
+            <div class="passage" id="passage" aria-label="Typing passage"></div>
+            <textarea id="typingInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Type the passage"></textarea>
+          </div>
+
+          <div class="test-footer">
+            <div class="character-count"><span id="typedCount">0</span> / <span id="totalCount">0</span></div>
+            <div class="actions">
+              <button class="text-button" id="restartButton"><kbd>tab</kbd> restart</button>
+              <button class="icon-button" id="newTextButton" aria-label="New text" title="New text">↻</button>
+            </div>
+          </div>
+
+          <section class="result-panel" id="resultPanel" hidden>
+            <div class="result-heading">
+              <span id="resultHeading">Session complete</span>
+              <strong id="resultGrade">A</strong>
+            </div>
+            <div class="result-stats">
+              <div><strong id="resultWpm">0</strong><span>WPM</span></div>
+              <div><strong id="resultAccuracy">100%</strong><span>Accuracy</span></div>
+              <div><strong id="resultCharacters">0/0</strong><span>Characters</span></div>
+              <div><strong id="resultErrors">0</strong><span>Errors</span></div>
+              <div><strong id="resultTime">0s</strong><span>Total time</span></div>
+            </div>
+            <div class="result-actions">
+              <button class="secondary-button" id="resultRetry">Retry</button>
+              <button class="primary-button" id="resultNew">New text</button>
+              <button class="text-button" id="historyToggle">View history</button>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <aside class="history-panel" id="historyPanel" aria-label="Typing history">
+        <div class="history-header">
+          <h2>Recent runs</h2>
+          <button class="text-button" id="clearHistory">Clear</button>
+        </div>
+        <div id="historyList"></div>
+      </aside>
+    </section>
+
+    <section id="skillView" class="view" aria-label="Commission skill test">
+      <div class="skill-shell">
+        <header class="skill-header">
+          <div class="skill-brand">
+            <img src="https://san122.in/logo-typing.svg" alt="Typing Practice" onerror="this.style.display='none'">
+            <div>
+              <strong>Typing Practice</strong>
+              <span>Commission Skill Test</span>
+            </div>
+          </div>
+          <div class="skill-tools">
+            <div class="language-switch" id="skillLanguage">
+              <button class="active" data-language="english">English</button>
+              <button data-language="hindi">Hindi</button>
+              <button data-language="custom">Custom</button>
+            </div>
+            <button class="primary-button" id="startSkillTest">Start Test</button>
+          </div>
+        </header>
+
+        <div class="candidate-strip">
+          <label>ROLL NO : <input id="skillRoll" maxlength="20" placeholder="________"></label>
+          <label>NAME : <input id="skillName" maxlength="40" placeholder="________"></label>
+          <span>SKILL TEST : <strong>TYPING TEST</strong></span>
+          <span>TIME : <strong id="skillTime">10:00</strong></span>
+        </div>
+
+        <div class="skill-workspace">
+          <aside class="skill-info">
+            <div><span>Language</span><strong id="skillLanguageValue">English</strong></div>
+            <div><span>Duration</span><strong>10 min</strong></div>
+            <div><span>WPM</span><strong id="skillWpm">0</strong></div>
+            <div><span>Accuracy</span><strong id="skillAccuracy">100%</strong></div>
+            <div><span>Errors</span><strong id="skillErrors">0</strong></div>
+            <div><span>Result</span><strong id="skillResult">Waiting</strong></div>
+          </aside>
+          <div class="skill-paper-column" id="skillPaperColumn">
+            <div class="skill-paper-heading">
+              <span id="skillPaperLabel">English typing passage</span>
+              <span id="skillStatus">Ready</span>
+            </div>
+            <div class="skill-custom-panel" id="skillCustomPanel" hidden>
+              <label for="skillCustomPaper">Write freely</label>
+              <textarea id="skillCustomPaper" maxlength="10000" placeholder="Start typing your own text here..."></textarea>
+              <button class="secondary-button" id="clearSkillCustom" type="button">Clear text</button>
+            </div>
+            <div class="skill-paper" id="skillPassage" tabindex="0"></div>
+            <label class="skill-editor-label" for="skillInput">Type here</label>
+            <textarea class="skill-input" id="skillInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Skill test typing area" placeholder="Your typed text appears here..."></textarea>
+            <div class="skill-countdown" id="skillCountdown" hidden>
+              <span id="skillCountdownValue">5</span>
+              <strong>Get ready</strong>
+            </div>
+          </div>
+        </div>
+
+        <section class="skill-result-panel" id="skillResultPanel" hidden>
+          <div>
+            <span>Skill test complete</span>
+            <strong id="skillResultStatus">FAIL</strong>
+          </div>
+          <div class="skill-result-stats">
+            <div><strong id="skillResultWpm">0</strong><span>WPM</span></div>
+            <div><strong id="skillResultAccuracy">100%</strong><span>Accuracy</span></div>
+            <div><strong id="skillResultErrors">0</strong><span>Errors</span></div>
+            <div><strong id="skillResultTime">10:00</strong><span>Total time</span></div>
+          </div>
+          <button class="primary-button" id="skillResultRetry">Try again</button>
+        </section>
+
+        <footer class="skill-footer">
+          <p>This website is made for typing practice only. The interface is made keeping in view of the software used by the Commission.</p>
+          <p>English word dictionary by <a href="https://github.com/dwyl/english-words" target="_blank" rel="noopener">dwyl</a> is used to detect spelling mistakes.</p>
+          <div class="skill-footer-actions">
+            <a href="https://san122.in/strokes.html" target="_blank" rel="noopener">Calculate WPM</a>
+            <a href="https://telegram.me/typingpracticesoftware" target="_blank" rel="noopener">Telegram</a>
+            <a href="https://www.instagram.com/san122.illustrations/" target="_blank" rel="noopener">
+              <img src="https://san122.in/san122.png" alt="san122 illustrations" onerror="this.style.display='none'">
+            </a>
+          </div>
+        </footer>
+      </div>
+    </section>
+
+    <section id="learnView" class="view" aria-label="Typing lessons">
+      <div class="learn-shell">
+        <aside class="course-sidebar">
+          <div class="course-heading">
+            <div>
+              <span>Course</span>
+              <h1>Touch typing</h1>
+            </div>
+            <strong id="coursePercent">0%</strong>
+          </div>
+          <div class="course-progress"><div id="courseProgressBar"></div></div>
+          <div id="lessonList" class="lesson-list"></div>
+        </aside>
+
+        <div class="lesson-workspace">
+          <header class="lesson-header">
+            <div>
+              <span id="lessonEyebrow">Foundation · 01</span>
+              <h2 id="lessonTitle">Home row</h2>
+            </div>
+            <button class="secondary-button" id="resetLesson">Reset lesson</button>
+          </header>
+
+          <div class="lesson-card" id="lessonCard">
+            <p class="lesson-instruction" id="lessonInstruction">Place each finger on its home-row key.</p>
+            <div class="lesson-passage" id="lessonPassage" tabindex="0"></div>
+            <textarea id="lessonInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Practice lesson text"></textarea>
+          </div>
+
+          <div class="lesson-footer" id="lessonFooter">
+            <div class="lesson-stats">
+              <div><strong id="lessonWpm">0</strong><span>WPM</span></div>
+              <div><strong id="lessonAccuracy">100%</strong><span>Accuracy</span></div>
+            </div>
+            <button class="primary-button" id="nextLesson" disabled>Complete lesson</button>
+          </div>
+
+          <div class="game-panel" id="gamePanel" hidden>
+            <div class="game-toolbar">
+              <div class="game-stats">
+                <div><strong id="gameScore">0</strong><span>Score</span></div>
+                <div><strong id="gameTime">0</strong><span>Seconds</span></div>
+                <div id="gameLivesWrap"><strong id="gameLives">3</strong><span>Lives</span></div>
+              </div>
+              <button class="secondary-button" id="gameRestart" type="button">Restart</button>
+            </div>
+            <div class="game-stage" id="gameStage">
+              <div class="game-words" id="gameWords"></div>
+              <div class="game-prompt" id="gamePrompt" hidden><span></span></div>
+              <div class="game-start" id="gameStart">
+                <strong id="gameStartTitle">Typing game</strong>
+                <p id="gameStartText">Type each word before it reaches the bottom.</p>
+                <button class="primary-button" id="gameStartButton" type="button">Start game</button>
+              </div>
+            </div>
+            <div class="game-entry">
+              <label for="gameInput">Type here</label>
+              <input id="gameInput" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Game typing input" placeholder="Type a word..." disabled>
+            </div>
+            <p class="game-message" id="gameMessage">Match each word exactly. Press backspace to fix a typo.</p>
+          </div>
+
+          <div class="keyboard-guide" id="keyboardGuide" aria-label="Keyboard hand guide"></div>
+          <p class="finger-hint" id="fingerHint">Finger guide · <strong id="fingerHintText">Type a key to see which finger to use.</strong></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="gamesView" class="view" aria-label="Typing games">
+      <div class="arcade-wallpaper" aria-hidden="true"><div class="arcade-floaties" id="arcadeFloaties"></div></div>
+      <div class="games-shell">
+        <header class="games-header">
+          <div>
+            <span>Arcade</span>
+            <h1>Typing games</h1>
+          </div>
+          <p>Pick a game, keep your hands on the home row, and beat your best score.</p>
+        </header>
+
+        <div class="game-grid" id="gameGrid"></div>
+
+        <div class="arcade-panel" id="arcadePanel" hidden>
+          <header class="arcade-header">
+            <button class="text-button" id="arcadeBack" type="button">← All games</button>
+            <div class="arcade-title">
+              <span id="arcadeEyebrow">Game</span>
+              <h2 id="arcadeTitle">Word Rain</h2>
+            </div>
+            <button class="secondary-button" id="arcadeRestart" type="button">Restart</button>
+          </header>
+
+          <div class="game-toolbar">
+            <div class="game-stats">
+              <div><strong id="arcadeScore">0</strong><span>Score</span></div>
+              <div><strong id="arcadeTime">0</strong><span>Seconds</span></div>
+              <div id="arcadeLivesWrap"><strong id="arcadeLives">3</strong><span>Lives</span></div>
+              <div><strong id="arcadeBest">0</strong><span>Best</span></div>
+            </div>
+          </div>
+
+          <div class="character-lane" id="characterLane" hidden>
+            <div class="character-track">
+              <span class="character-runner" id="characterRunner"><img src="assets/kiko.svg" alt="Kiko the key ninja"></span>
+              <span class="character-target" aria-hidden="true">🚩</span>
+            </div>
+            <p class="character-bubble" id="characterBubble">Type a word to help Kiko run!</p>
+          </div>
+
+          <div class="game-stage arcade-stage" id="arcadeStage">
+            <div class="game-words" id="arcadeWords"></div>
+            <div class="game-prompt" id="arcadePrompt" hidden><span></span></div>
+            <div class="game-start" id="arcadeStart">
+              <strong id="arcadeStartTitle">Word Rain</strong>
+              <p id="arcadeStartText">Type each falling word before it reaches the floor.</p>
+              <button class="primary-button" id="arcadeStartButton" type="button">Start game</button>
+            </div>
+          </div>
+
+          <div class="game-entry">
+            <label for="arcadeInput">Type here</label>
+            <input id="arcadeInput" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Arcade typing input" placeholder="Type a word..." disabled>
+          </div>
+          <p class="game-message" id="arcadeMessage">Match each target exactly. Press backspace to fix a typo.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="script.js?v=16"></script>
+</body>
+</html>

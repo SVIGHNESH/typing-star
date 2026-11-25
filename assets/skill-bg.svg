@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <radialGradient id="cool" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5b8def" stop-opacity=".18"/>
+      <stop offset="100%" stop-color="#5b8def" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cyan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5bd1d1" stop-opacity=".12"/>
+      <stop offset="100%" stop-color="#5bd1d1" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="paper" width="1600" height="46" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="45" x2="1600" y2="45" stroke="#9fc0ff" stroke-opacity=".05" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#paper)"/>
+  <circle cx="200" cy="200" r="380" fill="url(#cool)"/>
+  <circle cx="1400" cy="840" r="400" fill="url(#cyan)"/>
+
+  <!-- clock -->
+  <g transform="translate(1330 180)" opacity=".16">
+    <circle r="110" fill="none" stroke="#9fc0ff" stroke-width="2"/>
+    <circle r="6" fill="#9fc0ff"/>
+    <line x1="0" y1="0" x2="0" y2="-82" stroke="#9fc0ff" stroke-width="3"/>
+    <line x1="0" y1="0" x2="55" y2="22" stroke="#9fc0ff" stroke-width="3"/>
+    <g stroke="#9fc0ff" stroke-opacity=".6" stroke-width="2">
+      <line x1="0" y1="-104" x2="0" y2="-94"/>
+      <line x1="0" y1="104" x2="0" y2="94"/>
+      <line x1="-104" y1="0" x2="-94" y2="0"/>
+      <line x1="104" y1="0" x2="94" y2="0"/>
+    </g>
+  </g>
+
+  <!-- candidate sheet lines -->
+  <g transform="translate(120 640) rotate(-5)" opacity=".14">
+    <rect width="330" height="220" rx="14" fill="#0b1526" fill-opacity=".35" stroke="#9fc0ff" stroke-opacity=".35"/>
+    <line x1="28" y1="52" x2="300" y2="52" stroke="#9fc0ff" stroke-opacity=".45"/>
+    <line x1="28" y1="92" x2="260" y2="92" stroke="#9fc0ff" stroke-opacity=".28"/>
+    <line x1="28" y1="132" x2="286" y2="132" stroke="#9fc0ff" stroke-opacity=".28"/>
+    <line x1="28" y1="172" x2="220" y2="172" stroke="#9fc0ff" stroke-opacity=".22"/>
+  </g>
+
+  <g font-family="Courier New, monospace" font-weight="700" fill="#9fc0ff" fill-opacity=".055">
+    <text x="520" y="260" font-size="150">WPM</text>
+    <text x="760" y="900" font-size="130">SKILL</text>
+    <text x="240" y="400" font-size="110">10:00</text>
+  </g>
+  <path d="M -50 860 C 360 760, 640 960, 1000 850 S 1420 700, 1700 810" fill="none" stroke="#5b8def" stroke-opacity=".09" stroke-width="2"/>
+</svg>

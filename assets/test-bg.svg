@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <radialGradient id="warm" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f4cd3a" stop-opacity=".16"/>
+      <stop offset="100%" stop-color="#f4cd3a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="keyFace" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5f0e1" stop-opacity=".07"/>
+      <stop offset="100%" stop-color="#f5f0e1" stop-opacity=".02"/>
+    </linearGradient>
+    <pattern id="grid" width="52" height="52" patternUnits="userSpaceOnUse">
+      <path d="M 52 0 L 0 0 0 52" fill="none" stroke="#f4cd3a" stroke-opacity=".045" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#grid)"/>
+  <circle cx="240" cy="180" r="360" fill="url(#warm)"/>
+  <circle cx="1360" cy="820" r="420" fill="url(#warm)" opacity=".7"/>
+
+  <g stroke="#f4cd3a" stroke-opacity=".13" fill="url(#keyFace)">
+    <g transform="translate(100 690) rotate(-14)">
+      <rect width="120" height="120" rx="18"/>
+      <text x="60" y="82" text-anchor="middle" font-family="Courier New, monospace" font-size="58" font-weight="700" fill="#f4cd3a" fill-opacity=".2" stroke="none">A</text>
+    </g>
+    <g transform="translate(1320 120) rotate(12)">
+      <rect width="104" height="104" rx="16"/>
+      <text x="52" y="72" text-anchor="middle" font-family="Courier New, monospace" font-size="50" font-weight="700" fill="#f5f0e1" fill-opacity=".14" stroke="none">F</text>
+    </g>
+    <g transform="translate(1400 640) rotate(-7)">
+      <rect width="92" height="92" rx="14"/>
+      <text x="46" y="64" text-anchor="middle" font-family="Courier New, monospace" font-size="44" font-weight="700" fill="#f5f0e1" fill-opacity=".12" stroke="none">J</text>
+    </g>
+    <g transform="translate(420 120) rotate(9)">
+      <rect width="84" height="84" rx="13"/>
+      <text x="42" y="58" text-anchor="middle" font-family="Courier New, monospace" font-size="40" font-weight="700" fill="#f5f0e1" fill-opacity=".1" stroke="none">;</text>
+    </g>
+  </g>
+
+  <g font-family="Courier New, monospace" font-weight="700" fill="#f4cd3a" fill-opacity=".06">
+    <text x="650" y="220" font-size="150">time</text>
+    <text x="80" y="420" font-size="120">wpm</text>
+    <text x="1120" y="920" font-size="160">type</text>
+  </g>
+  <path d="M -50 820 C 380 720, 620 940, 980 840 S 1400 680, 1700 790" fill="none" stroke="#f4cd3a" stroke-opacity=".1" stroke-width="2"/>
+</svg>
