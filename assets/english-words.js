@@ -7166,3 +7166,5 @@ zircons zit zither zithers zits zloties zloty zlotys zodiac zodiacal zodiacs zom
 zoned zones zoning zonked zoo zookeeper zookeepers zoological zoologically zoologist zoologists zoology zoom
 zoomed zooming zooms zoophyte zoophytes zoophytic zooplankton zoos zoster zounds zucchini zucchinis zwieback
 zydeco zygote zygotes zygotic zymurgy éclair éclairs éclat élan émigré émigrés épée épées étude études`.split(/\s+/));
+
+if (typeof module !== "undefined") module.exports = paperEnglishWords;

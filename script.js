@@ -6,6 +6,8 @@
     set: (key, value) => localStorage.setItem(key, JSON.stringify(value))
   };
 
+  const { parseDurationInput, formatDurationLabel, formatClock, selectSkillPaper } = typingTests;
+
   const passages = {
     easy: [
       "Small steps each day build strong habits. Take your time, keep a steady rhythm, and let your hands learn the pattern.",
@@ -23,61 +25,6 @@
       "Beyond the observation deck, spectral clouds crossed the thermometer-blue sky while scientific instruments measured pressure, temperature, and every plausible variation."
     ]
   };
-  const wordLists = {
-    easy: ["about","after","again","air","also","always","answer","because","before","being","between","book","call","change","city","close","come","could","day","different","do","each","early","end","enough","even","every","family","find","first","form","friend","give","good","great","group","hand","high","home","house","idea","important","keep","know","large","last","life","light","little","long","look","make","may","most","move","need","never","new","next","night","number","often","once","open","other","own","people","place","play","point","right","same","say","school","small","something","start","still","story","take","than","thing","think","time","use","water","way","well","where","which","work","world","year","young"],
-    medium: ["ability","accurate","advance","balance","challenge","clarity","common","complex","develop","discover","energy","example","exercise","experience","focus","future","habit","imagine","improve","knowledge","language","memory","motion","observe","pattern","practice","progress","question","rhythm","simple","steady","success","system","train","unique","value","vision","window","across","almost","complete","provide","remain","return","should","through","under","various"],
-    hard: ["adventure","algorithm","architecture","assumption","atmosphere","beautiful","characteristic","consequence","consistency","coordinate","discipline","efficient","extraordinary","framework","fundamental","hypothesis","implementation","independent","intelligence","intersection","legitimate","measurement","observation","performance","perspective","phenomenon","possibility","precision","proportion","recognize","repetition","resolution","responsibility","significant","sufficient","transformation","uncertain","unexpected","variation","vocabulary","workflow"]
-  };
-
-  function generateWords(count = 160) {
-    const words = wordLists[state.difficulty];
-    const output = [];
-    for (let i = 0; i < count; i++) output.push(randomItem(words));
-    return output.join(" ");
-  }
-
-  const punctuationDrills = [
-    "Ready? Yes! Calm, steady, and clear.",
-    "Type; pause: breathe, then begin again.",
-    "It's a well-known fact: practice, patience, and focus matter.",
-    `She said, "Type slowly." Then she smiled.`,
-    "Add 5, 10, and 15; then check the total (20).",
-    "Wait - did you see that? (Yes!)",
-    "Keep going: accuracy first, speed second.",
-    `He asked, "Are we done?" and waited.`,
-    "Use commas, periods, and question marks correctly.",
-    "Don't rush; slow down, stay calm, and finish.",
-    "First, read the line; then type it well!",
-    "Is it clear? Good - now try it again."
-  ];
-
-  function generatePunctuation(count = 10) {
-    const output = [];
-    for (let i = 0; i < count; i++) output.push(randomItem(punctuationDrills));
-    return output.join(" ");
-  }
-
-  const numberDrills = [
-    "Call 98765 43210; ask for room 12.",
-    "Order 25 units: 10 boxes and 15 packs.",
-    "At 09:15, 120 people entered gate 4.",
-    "Pay 250; get 50 back, total 200.",
-    "Dates: 1/1/2026, 15/8/2025, and 31/12/2026.",
-    "Add 5, 10, and 15; the answer is 30.",
-    "Rate: 80%, 90%, or 100%? Choose one.",
-    "Phone 12345 67890; time is 18:20.",
-    "Numbers 1, 2, 3; pairs 12, 34, 56; total 100.",
-    "Code 2026-11-25; price 499; quantity 2.",
-    "Count 10, 20, 30; then stop at 40!",
-    "Invoice 1042: 3 items at 75 = 225."
-  ];
-
-  function generateNumbers(count = 10) {
-    const output = [];
-    for (let i = 0; i < count; i++) output.push(randomItem(numberDrills));
-    return output.join(" ");
-  }
-
   const state = {
     mode: "time", duration: 30, difficulty: "easy", passage: "", typed: "",
     running: false, ended: false, timer: null, startedAt: 0, elapsed: 0, saved: false,
@@ -131,21 +78,7 @@
   }
 
   function newPassage(focusInput = true) {
-    if (state.mode === "custom") {
-      state.passage = state.customPassage || "Practice accuracy by typing a custom passage. Paste your paper above, then select Use paper.";
-    } else if (state.mode === "punctuation") {
-      state.passage = generatePunctuation();
-    } else if (state.mode === "numbers") {
-      state.passage = generateNumbers();
-    } else if (state.mode === "quote") {
-      state.passage = randomItem([
-        "It is not that we have a short time to live, but that we waste much of it.",
-        "The secret of getting ahead is getting started. The secret of getting started is breaking your complex tasks into small manageable tasks.",
-        "Success is the sum of small efforts, repeated day in and day out."
-      ]);
-    } else {
-      state.passage = state.mode === "words" ? generateWords(180) : generateWords(70);
-    }
+    state.passage = typingTests.passage(state);
     resetRun(focusInput);
   }
 
@@ -193,47 +126,6 @@
 
   function escapeHtml(text) {
     return text.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
-  }
-
-  function parseDurationInput(raw) {
-    const text = raw.trim().toLowerCase().replace(/\s+/g, "");
-    if (!text) return NaN;
-    if (/^\d+(\.\d+)?$/.test(text)) return Number(text);
-    const units = { h: 3600, m: 60, s: 1 };
-    const pattern = /(\d+(?:\.\d+)?)(h|m|s)/g;
-    let total = 0;
-    let consumed = "";
-    let match;
-    while ((match = pattern.exec(text))) {
-      total += Number(match[1]) * units[match[2]];
-      consumed += match[0];
-    }
-    return consumed === text ? total : NaN;
-  }
-
-  function formatDurationLabel(totalSeconds) {
-    const s = Math.round(totalSeconds);
-    if (s >= 3600) {
-      const hours = Math.floor(s / 3600);
-      const minutes = Math.round((s % 3600) / 60);
-      return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
-    }
-    if (s >= 60) {
-      const minutes = Math.floor(s / 60);
-      const seconds = s % 60;
-      return seconds ? `${minutes}m ${seconds}s` : `${minutes}m`;
-    }
-    return `${s}s`;
-  }
-
-  function formatClock(totalSeconds) {
-    const s = Math.max(0, Math.ceil(totalSeconds));
-    const hours = Math.floor(s / 3600);
-    const minutes = Math.floor((s % 3600) / 60);
-    const seconds = s % 60;
-    if (hours) return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-    if (minutes) return `${minutes}:${String(seconds).padStart(2, "0")}`;
-    return String(seconds);
   }
 
   function renderTime(seconds) {
@@ -288,15 +180,8 @@
   const MAX_WRONG_WORDS = 10;
 
   function updateWrongWords(value) {
-    const typedWords = value.trim().split(/\s+/).filter(Boolean);
-    const passageWords = state.passage.trim().split(/\s+/).filter(Boolean);
-    const completed = /\s$/.test(value) ? typedWords.length : Math.max(0, typedWords.length - 1);
-    let wrong = 0;
-    for (let i = 0; i < completed; i++) {
-      if ((typedWords[i] || "") !== (passageWords[i] || "")) wrong++;
-    }
-    state.wrongWords = wrong;
-    $("#wrongWordsValue").textContent = wrong;
+    state.wrongWords = typingTests.wrongWords(value, state.passage);
+    $("#wrongWordsValue").textContent = state.wrongWords;
   }
 
   $("#typingInput").addEventListener("input", (e) => {
@@ -317,10 +202,7 @@
       return;
     }
     if (state.mode !== "custom" && state.mode !== "quote" && state.typed.length > state.passage.length - 160) {
-      const extra = state.mode === "punctuation" ? generatePunctuation(4)
-        : state.mode === "numbers" ? generateNumbers(4)
-        : generateWords(50);
-      state.passage += " " + extra;
+      state.passage += " " + typingTests.passage(state, true);
       $("#totalCount").textContent = state.passage.length;
     }
     if (state.typed.length >= state.passage.length) finishTest();
@@ -524,7 +406,6 @@
     $('.tab[data-view="test"]').click();
   });
 
-  const { selectSkillPaper } = typingTests;
   let skillLanguage = "english";
   let skillPaper;
 
