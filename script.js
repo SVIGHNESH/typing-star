@@ -524,24 +524,29 @@
     $('.tab[data-view="test"]').click();
   });
 
-  const skillPapers = {
-    english: "Public administration exists to serve people with fairness, speed, and accountability. Good officials communicate clearly, protect public resources, and make decisions with care. A disciplined office gives every citizen equal respect and provides reliable information at the right time.",
-    hindi: "लोक सेवक का कार्य जनता की सेवा करना है। प्रशासन में ईमानदारी, स्पष्टता और समय की पाबंदी आवश्यक है। हर नागरिक को समान सम्मान मिलना चाहिए और सरकारी कार्य में जवाबदेही होनी चाहिए।",
-  };
+  const { selectSkillPaper } = typingTests;
   let skillLanguage = "english";
+  let skillPaper;
 
   function renderSkillPaper(text, typedChars) {
-    $("#skillPassage").innerHTML = [...text].map((char, i) => {
-      if (i >= typedChars.length) return i === typedChars.length ? `<span class="current">${escapeHtml(char)}</span>` : escapeHtml(char);
-      return typedChars[i] === char
-        ? `<span class="correct">${escapeHtml(char)}</span>`
-        : `<span class="incorrect">${escapeHtml(char)}</span>`;
-    }).join("");
-    const current = $("#skillPassage .current");
-    if (current) {
-      const target = current.offsetTop - $("#skillPassage").clientHeight / 3;
-      $("#skillPassage").scrollTo({ top: Math.max(0, target), behavior: "smooth" });
+    const panel = $("#skillPassage");
+    const fragment = document.createDocumentFragment();
+    const end = Math.min(typedChars.length, text.length);
+    for (let i = 0; i < end;) {
+      const start = i;
+      const correct = typedChars[i] === text[i];
+      do { i++; } while (i < end && (typedChars[i] === text[i]) === correct);
+      const run = document.createElement("span");
+      run.className = correct ? "correct" : "incorrect";
+      run.textContent = text.slice(start, i);
+      fragment.append(run);
     }
+    const cursor = document.createElement("span");
+    cursor.className = "current";
+    cursor.textContent = text[end] || "";
+    fragment.append(cursor, text.slice(end + 1));
+    panel.replaceChildren(fragment);
+    panel.scrollTo({ top: Math.max(0, cursor.offsetTop - panel.clientHeight / 3), behavior: "instant" });
   }
 
   function setupTimedTest(view, { onTick, reset, finish, onInput }) {
@@ -555,6 +560,7 @@
     let startedAt = 0;
     let acceptedText = "";
     let timer;
+    let prepared = false;
 
     function setLocked(locked) {
       view.querySelector(".skill-shell").classList.toggle("locked", locked);
@@ -567,6 +573,7 @@
       status.textContent = "Ready";
       start.textContent = "Start Test";
       reset?.();
+      prepared = true;
     }
 
     function update() {
@@ -587,7 +594,8 @@
 
     function startTest() {
       if (start.disabled) return;
-      showReady();
+      if (!prepared) showReady();
+      prepared = false;
       setLocked(true);
       status.textContent = "Get ready";
       countdown.hidden = false;
@@ -641,7 +649,7 @@
   const skillTest = setupTimedTest($("#skillView"), {
     onTick(value, elapsed) {
       const typed = [...value];
-      const text = [...skillPapers[skillLanguage]];
+      const text = skillPaper.text;
       const correct = typed.filter((char, i) => char === text[i]).length;
       $("#skillAccuracy").textContent = typed.length ? `${Math.round(correct / typed.length * 100)}%` : "100%";
       $("#skillErrors").textContent = typed.length - correct;
@@ -649,9 +657,17 @@
       return typed.length >= text.length;
     },
     onInput(value) {
-      renderSkillPaper(skillPapers[skillLanguage], [...value]);
+      renderSkillPaper(skillPaper.text, [...value]);
     },
     reset() {
+      skillPaper = selectSkillPaper(skillLanguage, skillPaper);
+      const source = $("#skillPaperSource");
+      source.hidden = !skillPaper.url;
+      $("#skillPaperLabel").hidden = !!skillPaper.url;
+      if (skillPaper.url) {
+        source.href = skillPaper.url;
+        source.textContent = `${skillPaper.title} by ${skillPaper.author}`;
+      }
       $("#skillInput").value = "";
       $("#skillWpm").textContent = "0";
       $("#skillResult").textContent = "Waiting";
@@ -659,7 +675,7 @@
       $("#skillResultPanel").hidden = true;
       $("#skillAccuracy").textContent = "100%";
       $("#skillErrors").textContent = "0";
-      renderSkillPaper(skillPapers[skillLanguage], []);
+      renderSkillPaper(skillPaper.text, []);
     },
     finish(elapsed) {
       const wpm = Number($("#skillWpm").textContent);
