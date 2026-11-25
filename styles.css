@@ -368,6 +368,13 @@ main { min-height: calc(100vh - 68px); }
 .brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; color: white; background: #355ed8; box-shadow: inset 0 -3px #294bb9; }
 .brand-mark .icon { width: 24px; height: 24px; }
 .brand-dot { color: var(--accent); }
+.creator-credit {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0 14px;
+  width: min(92%, 1200px); margin: 8px auto 0;
+  color: var(--muted); font-size: 13px; line-height: 24px;
+}
+.creator-credit strong { color: var(--text); }
+.creator-credit a { color: var(--accent); text-underline-offset: 3px; }
 .tabs { display: flex; align-items: center; gap: 5px; }
 .tab { gap: 8px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); padding: 9px 13px; font-size: 14px; font-weight: 600; }
 .tab.active { color: var(--accent); background: var(--selected); }
@@ -498,6 +505,7 @@ button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); 
   .skill-result-stats div { padding: 0 6px; }
 }
 @media (max-width: 500px) {
+  .creator-credit { column-gap: 8px; }
   #testView.active { width: calc(100% - 28px); padding: 15px 0 30px; }
   .brand { font-size: 24px; }
   .brand-mark { width: 32px; height: 32px; }
