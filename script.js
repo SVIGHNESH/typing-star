@@ -648,7 +648,7 @@
 
   const skillTest = setupTimedTest($("#skillView"), {
     onTick(value, elapsed) {
-      const typed = [...value];
+      const typed = [...value.normalize("NFC")];
       const text = skillPaper.text;
       const correct = typed.filter((char, i) => char === text[i]).length;
       $("#skillAccuracy").textContent = typed.length ? `${Math.round(correct / typed.length * 100)}%` : "100%";
@@ -657,17 +657,18 @@
       return typed.length >= text.length;
     },
     onInput(value) {
-      renderSkillPaper(skillPaper.text, [...value]);
+      renderSkillPaper(skillPaper.text, [...value.normalize("NFC")]);
     },
     reset() {
       skillPaper = selectSkillPaper(skillLanguage, skillPaper);
       const source = $("#skillPaperSource");
-      source.hidden = !skillPaper.url;
-      $("#skillPaperLabel").hidden = !!skillPaper.url;
-      if (skillPaper.url) {
-        source.href = skillPaper.url;
-        source.textContent = `${skillPaper.title} by ${skillPaper.author}`;
-      }
+      const hindi = skillLanguage === "hindi";
+      const lang = hindi ? "hi" : "en";
+      $("#skillPassage").lang = lang;
+      $("#skillInput").lang = lang;
+      source.lang = lang;
+      source.href = skillPaper.url;
+      source.textContent = hindi ? `${skillPaper.title}, ${skillPaper.author}` : `${skillPaper.title} by ${skillPaper.author}`;
       $("#skillInput").value = "";
       $("#skillWpm").textContent = "0";
       $("#skillResult").textContent = "Waiting";
@@ -699,7 +700,6 @@
     $$("#skillLanguage button").forEach(b => b.classList.toggle("active", b === button));
     skillLanguage = button.dataset.language;
     $("#skillLanguageValue").textContent = button.textContent;
-    $("#skillPaperLabel").textContent = `${button.textContent} typing passage`;
     skillTest.showReady();
   });
   skillTest.showReady();
