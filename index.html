@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f6f7f9">
   <title>Keystack | Typing Practice</title>
-  <link rel="stylesheet" href="styles.css?v=18">
+  <link rel="stylesheet" href="styles.css?v=19">
 </head>
 <body data-view="test">
   <svg class="icon-library" aria-hidden="true"><defs>
@@ -261,23 +261,38 @@
           <span>TIME : <strong data-time>10:00</strong></span>
         </div>
 
-        <div class="skill-workspace">
-          <aside class="skill-info">
-            <div><span>WPM</span><strong data-wpm>0</strong></div>
-            <div><span>Pass mark</span><strong>35 WPM</strong></div>
-            <div><span>Result</span><strong data-result>Waiting</strong></div>
-          </aside>
-          <div class="skill-paper-column">
-            <div class="skill-paper-heading">
-              <label for="paperInput">Transcription</label>
-              <span data-status role="status">Ready</span>
-            </div>
-            <textarea id="paperInput" class="skill-input" data-editor maxlength="10000" readonly
-              autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-              placeholder="Start the test, then type the text from your paper here."></textarea>
-            <button class="secondary-button" id="clearPaperText" type="button">Clear text</button>
+        <div class="paper-workspace">
+          <div class="skill-paper-heading">
+            <label for="paperInput">Transcription</label>
+            <span data-status role="status">Ready</span>
           </div>
+          <textarea id="paperInput" class="skill-input" data-editor maxlength="10000" readonly
+            autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+            placeholder="Start the test, then type the text from your paper here."></textarea>
         </div>
+
+        <section id="paperReview" aria-labelledby="paperReviewTitle" hidden>
+          <header class="paper-review-header">
+            <h2 id="paperReviewTitle" tabindex="-1">Test results</h2>
+            <strong id="paperOutcome"></strong>
+          </header>
+          <dl class="paper-metrics">
+            <div><dt>Speed</dt><dd id="paperSpeed"></dd></div>
+            <div><dt>Words typed</dt><dd id="paperWords"></dd></div>
+            <div><dt>Flagged words</dt><dd id="paperFlagged"></dd></div>
+            <div><dt>Backspaces</dt><dd id="paperBackspaces"></dd></div>
+          </dl>
+          <p class="paper-note" id="paperScoreNote"></p>
+          <h3>Your transcription</h3>
+          <p class="paper-note" id="paperSpellingNote"></p>
+          <div id="paperTranscript"></div>
+          <details id="paperHistory">
+            <summary>Edit history</summary>
+            <ol id="paperEdits"></ol>
+            <p id="paperNoEdits" hidden>No edits recorded.</p>
+          </details>
+        </section>
+        <button class="secondary-button" id="clearPaperText" type="button">Clear text</button>
         <div class="skill-countdown" data-countdown hidden>
           <span>5</span>
           <strong>Get ready</strong>
@@ -413,6 +428,7 @@
     </section>
   </main>
   <div class="toast" id="toast" role="status"></div>
-  <script src="script.js?v=17"></script>
+  <script src="paper-review.js"></script>
+  <script src="script.js?v=18"></script>
 </body>
 </html>
