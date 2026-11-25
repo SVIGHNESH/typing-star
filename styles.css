@@ -10,6 +10,9 @@
   font-weight: 400;
   font-display: swap;
 }
+/* Netlify injects its public hosting badge after deployment. */
+iframe#nl-badge-frame { display: none; }
+
 :root {
   --mono: "IBM Plex Mono", ui-monospace, monospace;
   --bg: #131824; --surface: #1c2331; --surface-2: #242e41;
