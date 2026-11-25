@@ -527,38 +527,10 @@
   const skillPapers = {
     english: "Public administration exists to serve people with fairness, speed, and accountability. Good officials communicate clearly, protect public resources, and make decisions with care. A disciplined office gives every citizen equal respect and provides reliable information at the right time.",
     hindi: "लोक सेवक का कार्य जनता की सेवा करना है। प्रशासन में ईमानदारी, स्पष्टता और समय की पाबंदी आवश्यक है। हर नागरिक को समान सम्मान मिलना चाहिए और सरकारी कार्य में जवाबदेही होनी चाहिए।",
-    custom: "Write or paste your own passage in the Custom Practice Passage box."
   };
   let skillLanguage = "english";
-  let skillTyped = "";
-  let skillRunning = false;
-  let skillStartedAt = 0;
-  let skillTimer = null;
-  let skillCountdownTimer = null;
-  let skillKeystrokes = 0;
-  let skillLastTypedLength = 0;
-  skillPapers.custom = store.get("keystack-skill-custom", skillPapers.custom);
 
-  function lockSkillTest() {
-    document.querySelector(".skill-shell").classList.add("locked");
-    $("#skillRoll").disabled = true;
-    $("#skillName").disabled = true;
-    $$("#skillLanguage button").forEach(button => button.disabled = true);
-    $("#clearSkillCustom").disabled = true;
-    $("#startSkillTest").disabled = true;
-  }
-
-  function unlockSkillTest() {
-    document.querySelector(".skill-shell").classList.remove("locked");
-    $("#skillRoll").disabled = false;
-    $("#skillName").disabled = false;
-    $$("#skillLanguage button").forEach(button => button.disabled = false);
-    $("#clearSkillCustom").disabled = false;
-  }
-
-  function renderSkillPaper() {
-    const text = skillPapers[skillLanguage];
-    const typedChars = [...skillTyped];
+  function renderSkillPaper(text, typedChars) {
     $("#skillPassage").innerHTML = [...text].map((char, i) => {
       if (i >= typedChars.length) return i === typedChars.length ? `<span class="current">${escapeHtml(char)}</span>` : escapeHtml(char);
       return typedChars[i] === char
@@ -572,175 +544,145 @@
     }
   }
 
-  function startSkillTest() {
-    $("#skillCustomPaper").disabled = false;
-    $("#startSkillTest").disabled = false;
-    unlockSkillTest();
-    skillTyped = "";
-    skillKeystrokes = 0;
-    skillLastTypedLength = 0;
-    $("#skillInput").value = "";
-    $("#skillResult").textContent = "Waiting";
-    $("#skillResult").className = "";
-    $("#skillResultPanel").hidden = true;
-    runSkillCountdown();
+  function setupTimedTest(view, { score, reset, finish, onInput }) {
+    const editor = view.querySelector("[data-editor]");
+    const start = view.querySelector("[data-start]");
+    const clock = view.querySelector("[data-time]");
+    const speed = view.querySelector("[data-wpm]");
+    const result = view.querySelector("[data-result]");
+    const status = view.querySelector("[data-status]");
+    const countdown = view.querySelector("[data-countdown]");
+    const controls = view.querySelectorAll(".candidate-strip input, .language-switch button, #clearPaperText");
+    const duration = 600;
+    let startedAt = 0;
+    let timer;
+
+    function setLocked(locked) {
+      view.querySelector(".skill-shell").classList.toggle("locked", locked);
+      controls.forEach(control => control.disabled = locked);
+      start.disabled = locked;
+    }
+
+    function showReady() {
+      clock.textContent = "10:00";
+      speed.textContent = "0";
+      result.textContent = "Waiting";
+      result.className = "";
+      status.textContent = "Ready";
+      start.textContent = "Start Test";
+      reset?.();
+    }
+
+    function update() {
+      const elapsed = Math.min(duration, (Date.now() - startedAt) / 1000);
+      const remaining = Math.ceil(duration - elapsed);
+      clock.textContent = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`;
+      const { characters, complete } = score([...editor.value]);
+      const wpm = Math.round(characters / 5 * 60 / Math.max(1, elapsed));
+      speed.textContent = wpm;
+      if (remaining && !complete) return;
+
+      clearInterval(timer);
+      startedAt = 0;
+      editor.readOnly = true;
+      setLocked(false);
+      status.textContent = "Complete";
+      start.textContent = "Try again";
+      result.textContent = wpm >= 35 ? "PASS" : "FAIL";
+      result.className = result.textContent.toLowerCase();
+      finish?.(result.textContent, wpm, elapsed);
+    }
+
+    function startTest() {
+      if (start.disabled) return;
+      showReady();
+      setLocked(true);
+      status.textContent = "Get ready";
+      countdown.hidden = false;
+      const beginsAt = Date.now() + 5000;
+      countdown.querySelector("span").textContent = "5";
+      timer = setInterval(() => {
+        if (!startedAt) {
+          const seconds = Math.ceil((beginsAt - Date.now()) / 1000);
+          if (seconds > 0) {
+            countdown.querySelector("span").textContent = seconds;
+            return;
+          }
+          countdown.hidden = true;
+          startedAt = beginsAt;
+          editor.value = "";
+          onInput?.("");
+          editor.readOnly = false;
+          status.textContent = "In progress";
+          if (view.classList.contains("active")) editor.focus();
+        }
+        update();
+      }, 250);
+    }
+
+    editor.addEventListener("input", () => {
+      if (!startedAt) return;
+      onInput?.(editor.value);
+      update();
+    });
+    start.addEventListener("click", startTest);
+    return { showReady, startTest };
   }
 
-  function updateSkillMetrics() {
-    if (!skillStartedAt) return;
-    if (skillLanguage === "custom") {
-      const typedChars = [...($("#skillCustomPaper").value || "")].length;
-      const elapsedMinutes = Math.max((Date.now() - skillStartedAt) / 60000, 1 / 60);
-      const wpm = Math.round((typedChars / 5) / elapsedMinutes);
-      $("#skillWpm").textContent = Math.max(0, wpm);
+  const skillTest = setupTimedTest($("#skillView"), {
+    score(typed) {
+      const text = [...skillPapers[skillLanguage]];
+      const correct = typed.filter((char, i) => char === text[i]).length;
+      $("#skillAccuracy").textContent = typed.length ? `${Math.round(correct / typed.length * 100)}%` : "100%";
+      $("#skillErrors").textContent = typed.length - correct;
+      return { characters: correct, complete: typed.length >= text.length };
+    },
+    onInput(value) {
+      renderSkillPaper(skillPapers[skillLanguage], [...value]);
+    },
+    reset() {
+      $("#skillInput").value = "";
+      $("#skillResultPanel").hidden = true;
       $("#skillAccuracy").textContent = "100%";
       $("#skillErrors").textContent = "0";
-      const result = wpm >= 35 ? "PASS" : "FAIL";
-      $("#skillResult").textContent = result;
-      $("#skillResult").className = result.toLowerCase();
+      renderSkillPaper(skillPapers[skillLanguage], []);
+    },
+    finish(result, wpm, elapsed) {
       $("#skillResultPanel").hidden = false;
       $("#skillResultPanel").className = `skill-result-panel ${result.toLowerCase()}`;
       $("#skillResultStatus").textContent = result;
-      $("#skillResultWpm").textContent = $("#skillWpm").textContent;
+      $("#skillResultWpm").textContent = wpm;
       $("#skillResultAccuracy").textContent = $("#skillAccuracy").textContent;
       $("#skillResultErrors").textContent = $("#skillErrors").textContent;
-      $("#skillResultTime").textContent = $("#skillTime").textContent;
-      $("#skillResultPanel").scrollIntoView({ behavior: "smooth", block: "center" });
-      $("#skillResult").textContent = "Waiting";
-      $("#skillResult").className = "";
-      return;
+      $("#skillResultTime").textContent = formatClock(Math.ceil(elapsed));
     }
-    const text = skillPapers[skillLanguage];
-    const typedChars = [...skillTyped];
-    const correct = typedChars.filter((char, i) => char === text[i]).length;
-    const elapsedMinutes = Math.max((Date.now() - skillStartedAt) / 60000, 1 / 60);
-    const wpm = Math.round(correct / 5 / elapsedMinutes);
-    const accuracy = typedChars.length ? Math.round(correct / typedChars.length * 100) : 100;
-    $("#skillWpm").textContent = Math.max(0, wpm);
-    $("#skillAccuracy").textContent = `${accuracy}%`;
-    $("#skillErrors").textContent = typedChars.length - correct;
-  }
-
-  function endSkillTest() {
-    if (!skillRunning) return;
-    skillRunning = false;
-    clearInterval(skillTimer);
-    $("#skillStatus").textContent = "Complete";
-    $("#startSkillTest").textContent = "Start Test";
-    unlockSkillTest();
-    $("#skillCustomPaper").disabled = true;
-    $("#startSkillTest").disabled = false;
-    const wpm = Number($("#skillWpm").textContent);
-    const passed = wpm >= 35;
-    $("#skillResult").textContent = passed ? "PASS" : "FAIL";
-    $("#skillResult").className = passed ? "pass" : "fail";
-  }
-
-  function runSkillCountdown() {
-    let count = 5;
-    $("#skillCountdown").hidden = false;
-    $("#skillCountdownValue").textContent = count;
-    $("#skillStatus").textContent = "Get ready";
-    if (skillLanguage === "custom") lockSkillTest();
-    clearInterval(skillCountdownTimer);
-    skillCountdownTimer = setInterval(() => {
-      count--;
-      if (count > 0) {
-        $("#skillCountdownValue").textContent = count;
-        return;
-      }
-      clearInterval(skillCountdownTimer);
-      $("#skillCountdown").hidden = true;
-      beginTimedSkillTest();
-    }, 1000);
-  }
-
-  function beginTimedSkillTest() {
-    skillRunning = true;
-    skillStartedAt = Date.now();
-    lockSkillTest();
-    $("#skillStatus").textContent = "In progress";
-    $("#startSkillTest").textContent = "Restart Test";
-    $("#skillCustomPaper").disabled = false;
-    if (skillLanguage === "custom") $("#skillCustomPaper").focus();
-    else $("#skillInput").focus();
-    clearInterval(skillTimer);
-    skillTimer = setInterval(() => {
-      const elapsed = (Date.now() - skillStartedAt) / 1000;
-      const remaining = Math.max(0, 600 - elapsed);
-      const minutes = Math.floor(remaining / 60);
-      const seconds = Math.ceil(remaining % 60);
-      $("#skillTime").textContent = `${minutes}:${String(seconds).padStart(2, "0")}`;
-      updateSkillMetrics();
-      if (remaining <= 0) endSkillTest();
-    }, 250);
-  }
-
-  $("#startSkillTest").addEventListener("click", startSkillTest);
-  $("#skillResultRetry").addEventListener("click", () => {
-    skillRunning = false;
-    clearInterval(skillTimer);
-    $("#skillCustomPaper").disabled = false;
-    $("#skillInput").disabled = false;
-    startSkillTest();
   });
+  $("#skillResultRetry").addEventListener("click", skillTest.startTest);
   $("#skillPassage").addEventListener("click", () => $("#skillInput").focus());
-  $("#skillInput").addEventListener("keydown", (e) => {
-    if (!skillRunning) return;
-    if (e.key.length === 1 || e.key === "Enter" || e.key === "Backspace") skillKeystrokes++;
-  });
-  $("#skillInput").addEventListener("input", (e) => {
-    if (skillLanguage === "custom") return;
-    if (!skillRunning) return;
-    skillTyped = e.target.value;
-    const typedLength = [...skillTyped].length;
-    skillLastTypedLength = typedLength;
-    updateSkillMetrics();
-    renderSkillPaper();
-    if (typedLength >= [...skillPapers[skillLanguage]].length) endSkillTest();
-  });
   $("#skillLanguage").addEventListener("click", (e) => {
     const button = e.target.closest("button");
     if (!button) return;
-    $$("#skillLanguage button").forEach(b => b.classList.remove("active"));
-    button.classList.add("active");
+    $$("#skillLanguage button").forEach(b => b.classList.toggle("active", b === button));
     skillLanguage = button.dataset.language;
-    skillTyped = "";
-    skillRunning = false;
-    clearInterval(skillTimer);
-    $("#skillTime").textContent = "10:00";
     $("#skillLanguageValue").textContent = button.textContent;
     $("#skillPaperLabel").textContent = `${button.textContent} typing passage`;
-    $("#skillStatus").textContent = "Ready";
-    $("#skillWpm").textContent = "0";
-    $("#skillAccuracy").textContent = "100%";
-    $("#skillErrors").textContent = "0";
-    $("#skillInput").value = "";
-    $("#startSkillTest").textContent = "Start Test";
-    $("#skillCustomPanel").hidden = skillLanguage !== "custom";
-    unlockSkillTest();
-    $("#skillCustomPaper").disabled = false;
-    $("#skillPassage").style.display = skillLanguage === "custom" ? "none" : "";
-    $("#skillInput").style.display = skillLanguage === "custom" ? "none" : "";
-    $("#skillPaperLabel").textContent = skillLanguage === "custom" ? "Free writing area" : `${button.textContent} typing passage`;
-    $("#skillCustomPaper").value = skillPapers.custom && skillPapers.custom !== "Write or paste your own passage in the Custom Practice Passage box." ? skillPapers.custom : "";
-    renderSkillPaper();
+    skillTest.showReady();
   });
-  $("#skillCustomPaper").addEventListener("input", (e) => {
-    if (!skillRunning) {
-      e.target.value = skillTyped;
-      return;
-    }
-    skillTyped = e.target.value;
-    updateSkillMetrics();
-    store.set("keystack-skill-custom", e.target.value);
+  skillTest.showReady();
+
+  const paperDraftKey = "keystack-skill-custom";
+  const paperInput = $("#paperInput");
+  paperInput.value = store.get(paperDraftKey, "");
+  if (paperInput.value) $("#paperView [data-start]").textContent = "Start new test";
+  const paperTest = setupTimedTest($("#paperView"), {
+    score: typed => ({ characters: typed.length }),
+    onInput: value => store.set(paperDraftKey, value)
   });
-  $("#clearSkillCustom").addEventListener("click", () => {
-    $("#skillCustomPaper").value = "";
-    skillTyped = "";
-    updateSkillMetrics();
+  $("#clearPaperText").addEventListener("click", () => {
+    paperInput.value = "";
+    store.set(paperDraftKey, "");
+    paperTest.showReady();
   });
-  renderSkillPaper();
 
   const curriculum = [
     {

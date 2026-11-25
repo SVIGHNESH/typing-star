@@ -41,6 +41,7 @@
     <nav class="tabs" aria-label="Primary navigation">
       <button class="tab active" aria-current="page" data-view="test"><svg class="icon" aria-hidden="true"><use href="#i-keyboard"/></svg>Test</button>
       <button class="tab" data-view="skill"><svg class="icon" aria-hidden="true"><use href="#i-skill"/></svg>Skill Test</button>
+      <button class="tab" data-view="paper"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg>Paper to Text Test</button>
       <button class="tab" data-view="learn"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>Learn</button>
       <button class="tab" data-view="games"><svg class="icon" aria-hidden="true"><use href="#i-game"/></svg>Games</button>
     </nav>
@@ -179,9 +180,8 @@
             <div class="language-switch" id="skillLanguage">
               <button class="active" data-language="english">English</button>
               <button data-language="hindi">Hindi</button>
-              <button data-language="custom">Custom</button>
             </div>
-            <button class="primary-button" id="startSkillTest">Start Test</button>
+            <button class="primary-button" id="startSkillTest" data-start>Start Test</button>
           </div>
         </header>
 
@@ -189,32 +189,27 @@
           <label>ROLL NO : <input id="skillRoll" maxlength="20" placeholder="________"></label>
           <label>NAME : <input id="skillName" maxlength="40" placeholder="________"></label>
           <span>SKILL TEST : <strong>TYPING TEST</strong></span>
-          <span>TIME : <strong id="skillTime">10:00</strong></span>
+          <span>TIME : <strong id="skillTime" data-time>10:00</strong></span>
         </div>
 
         <div class="skill-workspace">
           <aside class="skill-info">
             <div><span>Language</span><strong id="skillLanguageValue">English</strong></div>
             <div><span>Duration</span><strong>10 min</strong></div>
-            <div><span>WPM</span><strong id="skillWpm">0</strong></div>
+            <div><span>WPM</span><strong id="skillWpm" data-wpm>0</strong></div>
             <div><span>Accuracy</span><strong id="skillAccuracy">100%</strong></div>
             <div><span>Errors</span><strong id="skillErrors">0</strong></div>
-            <div><span>Result</span><strong id="skillResult">Waiting</strong></div>
+            <div><span>Result</span><strong id="skillResult" data-result>Waiting</strong></div>
           </aside>
           <div class="skill-paper-column" id="skillPaperColumn">
             <div class="skill-paper-heading">
               <span id="skillPaperLabel">English typing passage</span>
-              <span id="skillStatus">Ready</span>
-            </div>
-            <div class="skill-custom-panel" id="skillCustomPanel" hidden>
-              <label for="skillCustomPaper">Write freely</label>
-              <textarea id="skillCustomPaper" maxlength="10000" placeholder="Start typing your own text here..."></textarea>
-              <button class="secondary-button" id="clearSkillCustom" type="button">Clear text</button>
+              <span id="skillStatus" data-status>Ready</span>
             </div>
             <div class="skill-paper" id="skillPassage" tabindex="0"></div>
             <label class="skill-editor-label" for="skillInput">Type here</label>
-            <textarea class="skill-input" id="skillInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Skill test typing area" placeholder="Your typed text appears here..."></textarea>
-            <div class="skill-countdown" id="skillCountdown" hidden>
+            <textarea class="skill-input" id="skillInput" data-editor readonly autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Skill test typing area" placeholder="Your typed text appears here..."></textarea>
+            <div class="skill-countdown" id="skillCountdown" data-countdown hidden>
               <span id="skillCountdownValue">5</span>
               <strong>Get ready</strong>
             </div>
@@ -246,6 +241,47 @@
             </a>
           </div>
         </footer>
+      </div>
+    </section>
+
+    <section id="paperView" class="view" aria-labelledby="paperTitle">
+      <div class="skill-shell">
+        <header class="skill-header">
+          <div class="skill-brand">
+            <div class="skill-emblem"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg></div>
+            <h1 id="paperTitle">Paper to Text Test</h1>
+          </div>
+          <button class="primary-button" data-start>Start Test</button>
+        </header>
+
+        <div class="candidate-strip">
+          <label>ROLL NO : <input maxlength="20" placeholder="________"></label>
+          <label>NAME : <input maxlength="40" placeholder="________"></label>
+          <span>DURATION : <strong>10 minutes</strong></span>
+          <span>TIME : <strong data-time>10:00</strong></span>
+        </div>
+
+        <div class="skill-workspace">
+          <aside class="skill-info">
+            <div><span>WPM</span><strong data-wpm>0</strong></div>
+            <div><span>Pass mark</span><strong>35 WPM</strong></div>
+            <div><span>Result</span><strong data-result>Waiting</strong></div>
+          </aside>
+          <div class="skill-paper-column">
+            <div class="skill-paper-heading">
+              <label for="paperInput">Transcription</label>
+              <span data-status role="status">Ready</span>
+            </div>
+            <textarea id="paperInput" class="skill-input" data-editor maxlength="10000" readonly
+              autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+              placeholder="Start the test, then type the text from your paper here."></textarea>
+            <button class="secondary-button" id="clearPaperText" type="button">Clear text</button>
+          </div>
+        </div>
+        <div class="skill-countdown" data-countdown hidden>
+          <span>5</span>
+          <strong>Get ready</strong>
+        </div>
       </div>
     </section>
 
