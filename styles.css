@@ -573,3 +573,27 @@ button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); 
   .metric-label { font-size: 8px; }
   .test-footer .actions { gap: 2px; }
 }
+
+.paper-workspace, #paperReview { margin-top: 22px; }
+#paperReview { padding: clamp(16px, 3vw, 28px); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.paper-review-header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.paper-review-header h2 { margin: 0; font-size: 24px; letter-spacing: -.04em; }
+#paperOutcome { font-size: 14px; color: var(--muted); }
+#paperOutcome.passed { color: var(--accent); }
+.paper-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 18px 0 0; padding: 16px 0; border-block: 1px solid var(--border); }
+.paper-metrics dt, #paperEdits small { color: var(--muted); font-size: 12px; }
+.paper-metrics dd { margin: 4px 0 0; font: 600 clamp(18px, 2.5vw, 27px) var(--mono); overflow-wrap: anywhere; }
+.paper-note, #paperNoEdits { margin: 8px 0; font-size: 13px; color: var(--muted); }
+#paperReview h3 { font-size: 17px; margin: 24px 0 0; }
+#paperTranscript { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 45vh; overflow: auto; font: 16px/1.8 var(--mono); padding: 12px 16px; background: var(--surface-2); border-radius: 8px; }
+#paperTranscript mark { color: var(--error); background: transparent; text-decoration: underline wavy; text-underline-offset: 3px; }
+#paperHistory { margin-top: 18px; border-top: 1px solid var(--border); }
+#paperHistory summary { padding: 14px 0 2px; cursor: pointer; font-weight: 700; }
+#paperEdits { list-style: none; padding: 0; margin: 6px 0 0; max-height: 45vh; overflow: auto; }
+#paperEdits li { display: grid; grid-template-columns: 6em minmax(0, 1fr) auto; gap: 8px; align-items: baseline; border-bottom: 1px solid var(--border); padding: 9px 0; font-size: 13px; }
+#paperEdits code { white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--mono); }
+@media (max-width: 600px) {
+  .paper-metrics { grid-template-columns: repeat(2, 1fr); }
+  #paperEdits li { grid-template-columns: 1fr auto; }
+  #paperEdits code { grid-row: 2; grid-column: 1 / -1; }
+}
