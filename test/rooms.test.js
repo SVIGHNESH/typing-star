@@ -69,6 +69,9 @@ test("shared deadline scores disconnected typists and rejects late edits and joi
   await delay(start.start - Date.now() + 15);
   const body = { text: host.passage.slice(0, 10), page: 0 };
   await Promise.all([host, peers[0]].map(m => call(m, "sync", body)));
+  const stopped = await call(peers[2], "sync", { page: 0, text: body.text + " " + "x ".repeat(10) });
+  assert.equal(stopped.status, "error limit");
+  assert.equal(stopped.phase, "running");
   assert.equal((await call(peers[0], "sync")).text, body.text);
   await call(peers[1], "leave");
   await delay(start.end - Date.now() + 15);
@@ -77,6 +80,8 @@ test("shared deadline scores disconnected typists and rejects late edits and joi
   assert.equal(result.text, body.text);
   const ranked = result.leaderboard.filter(m => m.ranked);
   assert.deepEqual(ranked.map(m => [m.wpm, m.accuracy]), [[60, 100], [60, 100]]);
+  const limited = result.leaderboard.find(m => m.id === peers[2].id);
+  assert.deepEqual([limited.status, limited.ranked, limited.wpm, limited.accuracy], ["error limit", false, null, null]);
   assert.equal(result.leaderboard.find(m => m.id === peers[1].id).status, "left");
 });
 
@@ -96,7 +101,7 @@ test("continuous tests share subsequent pages and ignore a retried page submissi
   await call(guest, "leave");
   const final = await call(host, "sync");
   assert.equal(final.phase, "results");
-  assert.equal(final.leaderboard[0].status, "error limit");
+  assert.equal(final.leaderboard.find(m => m.id === host.id).status, "error limit");
 });
 
 test("new players join between rounds without changing scores, and replay starts with fresh attempts", async () => {

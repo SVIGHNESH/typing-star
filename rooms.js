@@ -111,7 +111,7 @@
         previous = m;
         const row = document.createElement("tr");
         const suffix = m.id === room.id ? " (you)" : "";
-        const status = m.status === "left" ? " · Left" : !m.ranked ? " · No entry" : m.status === "error limit" ? " · Error limit" : "";
+        const status = m.status === "left" ? " · Left" : m.status === "error limit" ? " · Error limit" : !m.ranked ? " · No entry" : "";
         row.classList.toggle("self", m.id === room.id);
         row.append(cell("td", m.ranked ? rank : "-"), cell("td", m.name + suffix + status),
           cell("td", m.ranked ? m.wpm : "-"), cell("td", m.ranked ? m.accuracy + "%" : "-"));
@@ -225,11 +225,11 @@
       renderPassage();
     }
     const waiting = !lobby && room.status !== "typing";
-    const title = lobby ? "Waiting room" : waiting ? "Your test is complete" : room.phase === "countdown" ? "Get ready" : "Test in progress";
+    const title = lobby ? "Waiting room" : room.status === "error limit" ? "Error limit reached" : waiting ? "Your test is complete" : room.phase === "countdown" ? "Get ready" : "Test in progress";
     if ($("#roomPhase").textContent !== title) $("#roomPhase").textContent = title;
     $("#roomInstruction").textContent = lobby
       ? (host ? "Share the code, then start when everyone has joined." : "Your host will start the test when everyone has joined.")
-      : waiting ? (room.status === "error limit" ? "You reached 10 wrong words. " : "") + "The leaderboard opens when everyone finishes or time runs out."
+      : waiting ? (room.status === "error limit" ? "Your attempt is unranked after 10 wrong words. " : "") + "The leaderboard opens when everyone finishes or time runs out."
       : room.config.mode === "paper" ? "Type from the same printed paper supplied by your host." : "Type the passage below.";
     updateClock();
   }

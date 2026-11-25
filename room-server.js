@@ -13,6 +13,10 @@ const modes = new Set([...continuous, "quote", "custom", "skill", "paper"]);
 const lobbyTimeout = 120_000;
 const resultsLifetime = 3_600_000;
 
+function logEvent(room, event, details = {}) {
+  console.log(JSON.stringify({ time: new Date().toISOString(), event, room: room.code, round: room.round, ...details }));
+}
+
 function reject(status, message) {
   throw Object.assign(new Error(message), { status });
 }
@@ -66,7 +70,8 @@ function join(room, name, now) {
 }
 
 function score({ id, name, status, wpm, accuracy, chars }) {
-  return { id, name, status, wpm, accuracy, ranked: chars > 0 && status !== "left" };
+  const ranked = status === "finished" && chars > 0;
+  return { id, name, status, ranked, wpm: ranked ? wpm : null, accuracy: ranked ? accuracy : null };
 }
 
 function completeRound(room, now) {
@@ -76,6 +81,7 @@ function completeRound(room, now) {
   room.phase = "results";
   room.finishedAt = now;
   room.version++;
+  logEvent(room, "round.completed", { participants: room.leaderboard.length, ranked: room.leaderboard.filter(m => m.ranked).length });
 }
 
 function finish(room, member, now, status) {
@@ -84,6 +90,8 @@ function finish(room, member, now, status) {
   member.wpm = Math.round(member.correct * 12 / seconds);
   room.remaining--;
   room.version++;
+  const { ranked, wpm, accuracy } = score(member);
+  logEvent(room, "attempt.ended", { memberId: member.id, status, ranked, wpm, accuracy });
   if (!room.remaining) completeRound(room, now);
 }
 
@@ -91,6 +99,7 @@ function advance(room, now) {
   if (room.phase === "countdown" && now >= room.start) {
     room.phase = "running";
     room.version++;
+    logEvent(room, "round.started");
   }
   if (room.phase === "running" && now >= room.end) {
     for (const member of room.members.values()) {
@@ -99,7 +108,7 @@ function advance(room, now) {
   }
 }
 
-function leave(room, token, now) {
+function leave(room, token, now, reason = "leave") {
   const member = room.members.get(token);
   if (member.status === "typing") finish(room, member, now, "left");
   if (!acceptingPlayers(room)) room.departed.push(score(member));
@@ -107,6 +116,7 @@ function leave(room, token, now) {
   if (member.id === room.host) room.host = room.members.values().next().value?.id || null;
   if (!room.members.size && room.phase === "lobby") rooms.delete(room.code);
   room.version++;
+  logEvent(room, "member.left", { memberId: member.id, reason });
 }
 
 function acceptInput(room, member, page, text, now) {
@@ -186,6 +196,7 @@ async function roomRequest(req, route) {
     const room = createRoom(configuration(body.config));
     const { member, token } = join(room, body.name, now);
     rooms.set(room.code, room);
+    logEvent(room, "room.created", { memberId: member.id, name: member.name });
     return { token, ...snapshot(room, member, {}, now) };
   }
   const match = /^\/api\/rooms\/([A-Z2-9]{6})\/(join|sync|start|next|leave)$/.exec(route);
@@ -195,6 +206,7 @@ async function roomRequest(req, route) {
   const action = match[2];
   if (action === "join") {
     const { member, token } = join(room, body.name, now);
+    logEvent(room, "member.joined", { memberId: member.id, name: member.name });
     return { token, ...snapshot(room, member, {}, now) };
   }
   const token = req.headers.authorization?.replace(/^Bearer /, "");
@@ -222,6 +234,7 @@ async function roomRequest(req, route) {
       room.remaining = room.members.size;
       for (const participant of room.members.values()) participant.status = "typing";
       room.version++;
+      logEvent(room, "round.scheduled", { participants: room.remaining, mode: room.config.mode, duration: room.config.duration });
     }
   } else if (action === "leave") {
     leave(room, token, now);
@@ -262,7 +275,7 @@ setInterval(() => {
     advance(room, now);
     if (acceptingPlayers(room)) {
       for (const [token, member] of room.members) {
-        if (now - Math.max(member.lastSeen, room.finishedAt) > lobbyTimeout) leave(room, token, now);
+        if (now - Math.max(member.lastSeen, room.finishedAt) > lobbyTimeout) leave(room, token, now, "inactivity");
       }
     }
     if (room.phase === "results" && !room.members.size && now - room.finishedAt > resultsLifetime) rooms.delete(room.code);

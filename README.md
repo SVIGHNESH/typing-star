@@ -35,7 +35,9 @@ The host can select **Start next test** to reuse the settings or open **Change t
 Everyone still in the room starts the next round with a fresh score.
 If the host leaves, the next player in the roster becomes host.
 Paper transcription uses dictionary-recognized words for scoring.
-Participants who leave during the test or enter no text are unranked.
+Participants who reach the 10-word error limit, leave during the test, or enter no text are unranked and have no final WPM or accuracy.
+The room server writes one JSON line to standard output for room creation, joins, departures, round transitions, and each participant's result.
+Use the room code and round number to find the events for a test.
 
 There is no configured player limit.
 Capacity depends on the single server process and its network connection.
