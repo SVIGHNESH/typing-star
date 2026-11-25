@@ -86,10 +86,22 @@
 
   let muted = store.get("keystack-muted", false);
   let audioContext = null;
-  const theme = store.get("keystack-theme", "dark");
+  const theme = store.get("keystack-theme", "light");
   document.body.classList.toggle("light", theme === "light");
-  $("#themeButton").textContent = theme === "light" ? "☾" : "☼";
-  $("#soundButton").textContent = muted ? "×" : "♪";
+  function setIconButton(id, icon, label) {
+    const button = $(id);
+    button.querySelector("use").setAttribute("href", "#i-" + icon);
+    button.setAttribute("aria-label", label);
+    button.title = label;
+  }
+
+  function renderPreferences() {
+    const light = document.body.classList.contains("light");
+    setIconButton("#themeButton", light ? "moon" : "sun", light ? "Use dark theme" : "Use light theme");
+    setIconButton("#soundButton", muted ? "mute" : "sound", muted ? "Enable sounds" : "Mute sounds");
+    document.querySelector('meta[name="theme-color"]').content = light ? "#f6f7f9" : "#131824";
+  }
+  renderPreferences();
 
   function randomItem(items) {
     return items[Math.floor(Math.random() * items.length)];
@@ -118,7 +130,7 @@
     return 90;
   }
 
-  function newPassage() {
+  function newPassage(focusInput = true) {
     if (state.mode === "custom") {
       state.passage = state.customPassage || "Practice accuracy by typing a custom passage. Paste your paper above, then select Use paper.";
     } else if (state.mode === "punctuation") {
@@ -134,16 +146,21 @@
     } else {
       state.passage = state.mode === "words" ? generateWords(180) : generateWords(70);
     }
+    resetRun(focusInput);
+  }
+
+  function resetRun(focusInput = true) {
     state.typed = "";
     state.running = false;
     state.ended = false;
     clearInterval(state.timer);
     state.elapsed = 0;
     state.saved = false;
-    $("#typingArea").classList.remove("running");
+    $("#testStatus").textContent = "Ready";
+    $("#testStatus").classList.remove("active");
     $("#typingInput").value = "";
     $("#resultPanel").hidden = true;
-    $("#timeValue").textContent = formatClock(getDuration());
+    renderTime(getDuration());
     $("#wpmValue").textContent = "0";
     $("#accuracyValue").textContent = "100";
     state.wrongWords = 0;
@@ -152,7 +169,10 @@
     $("#typedCount").textContent = "0";
     $("#totalCount").textContent = state.passage.length;
     renderPassage();
-    $("#typingArea").focus();
+    $$(".test-controls button[data-mode], .test-controls button[data-duration], .test-controls button[data-difficulty]").forEach(button => {
+      button.setAttribute("aria-pressed", button.classList.contains("selected"));
+    });
+    if (focusInput && window.matchMedia("(pointer: fine)").matches) $("#typingInput").focus({ preventScroll: true });
   }
 
   function renderPassage() {
@@ -167,7 +187,7 @@
     if (current) {
       const top = current.offsetTop;
       const target = top - $("#passage").clientHeight / 3;
-      $("#passage").scrollTo({ top: Math.max(0, target), behavior: "smooth" });
+      $("#passage").scrollTo({ top: Math.max(0, target), behavior: "instant" });
     }
   }
 
@@ -216,10 +236,18 @@
     return String(seconds);
   }
 
+  function renderTime(seconds) {
+    const clock = formatClock(seconds);
+    $("#timeValue").textContent = clock;
+    $("#timeValue").classList.toggle("long-clock", clock.length > 5);
+    $("#timeUnit").hidden = Math.ceil(seconds) >= 60;
+  }
+
   function startTest() {
     if (state.running || state.ended) return;
     state.running = true;
-    $("#typingArea").classList.add("running");
+    $("#testStatus").textContent = "Typing";
+    $("#testStatus").classList.add("active");
     state.startedAt = Date.now();
     state.timer = setInterval(tick, 100);
   }
@@ -230,14 +258,14 @@
     let remaining;
     if (state.mode === "time") {
       remaining = Math.max(0, limit - state.elapsed);
-      $("#timeValue").textContent = formatClock(remaining);
+      renderTime(remaining);
       if (remaining <= 0) {
         state.elapsed = limit;
         finishTest();
       }
     } else {
       remaining = Math.max(0, limit - state.elapsed);
-      $("#timeValue").textContent = formatClock(remaining);
+      renderTime(remaining);
       if (remaining <= 0) finishTest();
     }
   }
@@ -301,6 +329,8 @@
   function finishTest(reason) {
     if (state.ended || state.saved) return;
     state.ended = true;
+    $("#testStatus").textContent = "Finished";
+    $("#testStatus").classList.remove("active");
     state.running = false;
     clearInterval(state.timer);
     $("#resultHeading").textContent = reason === "wrong-words" ? "Session ended · 10 wrong words" : "Session complete";
@@ -338,33 +368,31 @@
     store.set("keystack-pb", pb);
     renderPersonalBest();
     renderHistory();
-    $("#historyPanel").classList.add("open");
+    setHistoryOpen(true);
     showToast(reason === "wrong-words" ? "Session ended: 10 wrong words" : `Result saved · ${m.wpm} WPM`);
-    $("#typingArea").blur();
+    $("#typingInput").blur();
     $("#resultPanel").scrollIntoView({ behavior: "smooth", block: "center" });
     playTone(reason !== "wrong-words");
   }
 
   $("#typingArea").addEventListener("click", () => $("#typingInput").focus());
-  $("#typingArea").addEventListener("keydown", (e) => {
-    if (e.key === "Tab") { e.preventDefault(); newPassage(); }
-  });
-  $("#restartButton").addEventListener("click", newPassage);
-  $("#newTextButton").addEventListener("click", newPassage);
-  $("#resultRetry").addEventListener("click", newPassage);
-  $("#resultNew").addEventListener("click", newPassage);
+  $("#restartButton").addEventListener("click", () => resetRun());
+  $("#newTextButton").addEventListener("click", () => newPassage());
+  $("#resultRetry").addEventListener("click", () => resetRun());
+  $("#resultNew").addEventListener("click", () => newPassage());
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Tab" && $("#testView").classList.contains("active") && document.activeElement !== $("#typingInput")) {
+    if (!$("#testView").classList.contains("active")) return;
+    if (e.key === "Tab" && !e.shiftKey && e.target === $("#typingInput") && state.running) {
       e.preventDefault();
-      newPassage();
+      resetRun();
+    } else if (e.key === "Escape") {
+      resetRun();
+    } else if (e.target === document.body && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      $("#typingInput").focus({ preventScroll: true });
     }
-    if (e.key === "Escape") newPassage();
   });
-  document.addEventListener("click", (e) => {
-    if ($("#testView").classList.contains("active") && e.target.closest("#typingArea") === null &&
-        !e.target.closest("button, input, textarea, select, label, a") && document.activeElement !== $("#typingInput")) $("#typingInput").focus();
-  });
+
 
   $("#modeControls").addEventListener("click", (e) => {
     const button = e.target.closest("button");
@@ -372,7 +400,12 @@
     $$("#modeControls button").forEach(b => b.classList.remove("selected"));
     button.classList.add("selected");
     state.mode = button.dataset.mode;
-    $("#durationControls").style.opacity = state.mode === "time" ? "1" : ".45";
+    const fixedDuration = state.mode !== "time" && state.mode !== "custom";
+    $$("#durationControls button").forEach(option => {
+      option.disabled = fixedDuration;
+      option.classList.toggle("selected", Number(option.dataset.duration) === getDuration());
+    });
+    $(".duration-details").hidden = fixedDuration;
     $("#customDuration").disabled = state.mode !== "time" && state.mode !== "custom";
     $("#applyDuration").disabled = state.mode !== "time" && state.mode !== "custom";
     $("#customPaperPanel").hidden = state.mode !== "custom";
@@ -427,15 +460,21 @@
   }
   function renderHistory() {
     const results = store.get("keystack-results", []);
+    $("#clearHistory").hidden = !results.length;
     $("#historyList").innerHTML = results.length ? results.slice(0, 8).map(r => {
       const date = new Date(r.date).toLocaleDateString(undefined, { month: "short", day: "numeric" });
       const elapsed = Number(r.elapsed ?? r.duration ?? 0);
       const timeText = elapsed >= 60 ? `${Math.floor(elapsed / 60)}m ${elapsed % 60}s` : `${elapsed}s`;
       return `<div class="history-item"><span>${date} · ${r.mode}</span><strong>${r.wpm} WPM</strong><span>${r.accuracy}% acc</span><span>${r.errors} errors</span><span>${timeText}</span><span>${r.difficulty}</span></div>`;
-    }).join("") : `<div class="history-item"><span>No saved runs yet</span></div>`;
+    }).join("") : `<p class="empty-history"><svg class="icon" aria-hidden="true"><use href="#i-history"/></svg>Finish a test to see your results here.</p>`;
+  }
+  function setHistoryOpen(open) {
+    $("#historyPanel").classList.toggle("open", open);
+    $("#historyToggle").setAttribute("aria-expanded", open);
+    $("#historyToggle").textContent = open ? "Hide history" : "View history";
   }
   $("#historyToggle").addEventListener("click", () => {
-    $("#historyPanel").classList.toggle("open");
+    setHistoryOpen(!$("#historyPanel").classList.contains("open"));
   });
   $("#clearHistory").addEventListener("click", () => {
     store.set("keystack-results", []);
@@ -446,12 +485,12 @@
     document.body.classList.toggle("light");
     const light = document.body.classList.contains("light");
     store.set("keystack-theme", light ? "light" : "dark");
-    $("#themeButton").textContent = light ? "☾" : "☼";
+    renderPreferences();
   });
   $("#soundButton").addEventListener("click", () => {
     muted = !muted;
     store.set("keystack-muted", muted);
-    $("#soundButton").textContent = muted ? "×" : "♪";
+    renderPreferences();
     showToast(muted ? "Sound muted" : "Sound on");
   });
 
@@ -466,6 +505,7 @@
   $$(".tab").forEach(tab => tab.addEventListener("click", () => {
     $$(".tab").forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
+    $$(".tab").forEach(t => t.setAttribute("aria-current", t === tab ? "page" : "false"));
     $$(".view").forEach(v => v.classList.remove("active"));
     $(`#${tab.dataset.view}View`).classList.add("active");
     document.body.dataset.view = tab.dataset.view;
@@ -1710,5 +1750,5 @@
   buildKeyboard();
   renderLesson();
   $("#customPaper").value = state.customPassage;
-  newPassage();
+  newPassage(false);
 })();

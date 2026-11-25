@@ -24,6 +24,6 @@ A responsive, no-backend typing test and beginner typing course built with HTML,
 - 130-lesson touch-typing course spanning foundation, rows, punctuation, capitals, numbers, sentences, speed drills, and mastery
 - 11 built-in typing games (falling words and word sprints) placed at the end of every course stage
 - Dedicated Games arcade with 7 standalone games, including the cartoon character game Kiko Dash, per-game best scores, replay, a themed background image, and floating key wallpaper
-- Unique wallpaper and background color for every section: warm gold Test, blue Skill Test, green Learn, and violet Games
+- Illustrated practice workspace with live readings, a responsive settings panel, and light and dark themes
 - 141 total course items with completion tracking, stage labels, and a scrollable lesson sidebar
 - Keyboard-friendly restart and lesson controls
