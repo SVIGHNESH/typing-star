@@ -1,3 +1,15 @@
+function* paperWords(text, words) {
+  for (const match of text.matchAll(/[\p{L}\p{M}\p{N}]+(?:['’][\p{L}\p{M}\p{N}]+)*/gu)) {
+    const token = match[0];
+    if (!/\p{L}/u.test(token)) continue;
+    const word = token.normalize("NFC").replaceAll("’", "'").toLowerCase();
+    const known = words?.has(word) || (word.endsWith("'s") && words?.has(word.slice(0, -2)));
+    const end = match.index + token.length;
+    const characters = [...token].length + Number(/\s/u.test(text.charAt(end)));
+    yield { token, index: match.index, known, characters };
+  }
+}
+
 function createPaperReview(editor) {
   const view = editor.closest(".view");
   const panel = view.querySelector("#paperReview");
@@ -138,15 +150,11 @@ function createPaperReview(editor) {
     let count = 0;
     let flagged = 0;
     let characters = 0;
-    for (const match of text.matchAll(/[\p{L}\p{M}\p{N}]+(?:['’][\p{L}\p{M}\p{N}]+)*/gu)) {
-      const token = match[0];
-      if (!/\p{L}/u.test(token)) continue;
-      const word = token.normalize("NFC").replaceAll("’", "'").toLowerCase();
-      const known = words?.has(word) || (word.endsWith("'s") && words?.has(word.slice(0, -2)));
-      transcript.append(text.slice(cursor, match.index));
-      cursor = match.index + token.length;
+    for (const { token, index, known, characters: length } of paperWords(text, words)) {
+      transcript.append(text.slice(cursor, index));
+      cursor = index + token.length;
       if (known) {
-        characters += [...token].length + Number(/\s/u.test(text.charAt(cursor)));
+        characters += length;
       }
       if (words && !known) {
         const mark = document.createElement("mark");
@@ -182,3 +190,5 @@ function createPaperReview(editor) {
 
   return { reset, record, finish };
 }
+
+if (typeof module !== "undefined") module.exports = { paperWords };
